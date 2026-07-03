@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -21,13 +21,18 @@ fun QuickMathsScreen(
     viewModel: QuickMathsViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val strokes = remember { mutableStateListOf<Path>() }
+    val strokes = remember { mutableStateListOf<HandwritingStroke>() }
 
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
             Text(text = "Quick Maths")
-            Text(text = state.recognizedText)
-            TextButton(onClick = { strokes.clear() }) {
+            Text(text = if (state.isRecognizerReady) state.recognizedText else "Loading model…")
+            TextButton(
+                onClick = {
+                    strokes.clear()
+                    viewModel.onClear()
+                }
+            ) {
                 Text(text = "Clear")
             }
             HandwritingCanvas(
@@ -36,7 +41,9 @@ fun QuickMathsScreen(
                     strokes.add(it)
                     viewModel.onStrokeFinished(stroke = it)
                 },
-                modifier = Modifier.weight(weight = 1f),
+                modifier = Modifier
+                    .weight(weight = 1f)
+                    .onSizeChanged { viewModel.onCanvasSizeChanged(size = it) },
             )
         }
     }

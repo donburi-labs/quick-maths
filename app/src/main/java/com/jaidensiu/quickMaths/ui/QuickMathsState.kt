@@ -1,5 +1,6 @@
 package com.jaidensiu.quickMaths.ui
 
 data class QuickMathsState(
-    val recognizedText: String = ""
+    val recognizedText: String = "",
+    val isRecognizerReady: Boolean = false,
 )

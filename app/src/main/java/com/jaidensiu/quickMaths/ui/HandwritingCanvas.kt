@@ -20,11 +20,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.jaidensiu.quickMaths.domain.HandwritingPoint
 
 @Composable
 fun HandwritingCanvas(
-    strokes: List<Path>,
-    onStrokeFinished: (Path) -> Unit,
+    strokes: List<HandwritingStroke>,
+    onStrokeFinished: (HandwritingStroke) -> Unit,
     modifier: Modifier = Modifier,
     strokeWidth: Dp = 4.dp,
     strokeColor: Color = Color.Black,
@@ -42,10 +43,17 @@ fun HandwritingCanvas(
                     down.consume()
                     currentPath.reset()
                     currentPath.moveTo(x = down.position.x, y = down.position.y)
+                    val points = mutableListOf(
+                        HandwritingPoint(
+                            x = down.position.x,
+                            y = down.position.y,
+                            timeMillis = down.uptimeMillis
+                        )
+                    )
                     var last = down.position
                     invalidateTick++
 
-                    fun extendTo(position: Offset) {
+                    fun extendTo(position: Offset, timeMillis: Long) {
                         val mid = Offset(
                             x = (last.x + position.x) / 2f,
                             y = (last.y + position.y) / 2f
@@ -57,13 +65,22 @@ fun HandwritingCanvas(
                             y2 = mid.y
                         )
                         last = position
+                        points.add(
+                            HandwritingPoint(
+                                x = position.x,
+                                y = position.y,
+                                timeMillis = timeMillis
+                            )
+                        )
                     }
 
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.first()
-                        change.historical.forEach { extendTo(position = it.position) }
-                        extendTo(position = change.position)
+                        change.historical.forEach {
+                            extendTo(position = it.position, timeMillis = it.uptimeMillis)
+                        }
+                        extendTo(position = change.position, timeMillis = change.uptimeMillis)
                         change.consume()
                         invalidateTick++
                         if (event.changes.none { it.pressed }) {
@@ -71,7 +88,10 @@ fun HandwritingCanvas(
                         }
                     }
 
-                    val finished = Path().apply { addPath(path = currentPath) }
+                    val finished = HandwritingStroke(
+                        path = Path().apply { addPath(path = currentPath) },
+                        points = points.toList(),
+                    )
                     onStrokeFinished(finished)
                     currentPath.reset()
                     invalidateTick++
@@ -84,7 +104,7 @@ fun HandwritingCanvas(
             cap = StrokeCap.Round,
             join = StrokeJoin.Round,
         )
-        strokes.forEach { drawPath(path = it, color = strokeColor, style = style) }
+        strokes.forEach { drawPath(path = it.path, color = strokeColor, style = style) }
         drawPath(path = currentPath, color = strokeColor, style = style)
     }
 }
