@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,12 +23,12 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun HandwritingCanvas(
+    strokes: List<Path>,
+    onStrokeFinished: (Path) -> Unit,
     modifier: Modifier = Modifier,
     strokeWidth: Dp = 4.dp,
     strokeColor: Color = Color.Black,
-    onStrokeFinished: (Path) -> Unit,
 ) {
-    val strokes = remember { mutableStateListOf<Path>() }
     val currentPath = remember { Path() }
     var invalidateTick by remember { mutableIntStateOf(value = 0) }
 
@@ -73,10 +72,9 @@ fun HandwritingCanvas(
                     }
 
                     val finished = Path().apply { addPath(path = currentPath) }
-                    strokes.add(finished)
+                    onStrokeFinished(finished)
                     currentPath.reset()
                     invalidateTick++
-                    onStrokeFinished(finished)
                 }
             }
     ) {
