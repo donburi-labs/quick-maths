@@ -111,11 +111,12 @@ fun GameScreen(
                     ) {
                         Text(
                             text = "Your answer:",
-                            modifier = Modifier.padding(start = 16.dp),
+                            modifier = Modifier.padding(start = 8.dp),
+                            style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
                             text = state.recognizedText,
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineLarge,
                             modifier = Modifier.padding(start = 8.dp),
                         )
                         Spacer(modifier = Modifier.weight(weight = 1f))
@@ -126,7 +127,10 @@ fun GameScreen(
                             },
                             modifier = Modifier.padding(end = 8.dp),
                         ) {
-                            Text(text = "Clear")
+                            Text(
+                                text = "Clear",
+                                style = MaterialTheme.typography.titleLarge,
+                            )
                         }
                     }
                     HandwritingCanvas(

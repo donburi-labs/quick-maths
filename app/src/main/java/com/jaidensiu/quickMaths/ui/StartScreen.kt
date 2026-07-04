@@ -48,7 +48,10 @@ fun StartScreen(
                         .padding(paddingValues = innerPadding)
                         .padding(end = 8.dp),
                 ) {
-                    Text(text = "Clear")
+                    Text(
+                        text = "Clear",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
                 }
             }
             Column(
@@ -65,7 +68,7 @@ fun StartScreen(
                 Text(
                     text = "Solve 20 arithmetic problems as fast as you can",
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 16.dp),
                 )
                 state.bestTimeMs?.let { bestTimeMs ->
                     Text(
@@ -99,7 +102,12 @@ fun StartScreen(
                         Text(text = "Retry")
                     }
                 }
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(top = 32.dp)) {
+                Text(
+                    text = "Theme",
+                    modifier = Modifier.padding(top = 32.dp),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(top = 16.dp)) {
                     ThemePreference.entries.forEachIndexed { index, preference ->
                         SegmentedButton(
                             selected = state.themePreference == preference,
