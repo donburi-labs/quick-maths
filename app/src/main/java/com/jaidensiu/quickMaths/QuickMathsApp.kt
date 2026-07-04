@@ -1,5 +1,8 @@
 package com.jaidensiu.quickMaths
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +20,8 @@ import com.jaidensiu.quickMaths.ui.SettingsScreen
 import com.jaidensiu.quickMaths.ui.StartScreen
 import com.jaidensiu.quickMaths.ui.TOTAL_QUESTIONS
 
+private const val NAV_TRANSITION_MS = 300
+
 @Composable
 fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
     val navController = rememberNavController()
@@ -24,12 +29,19 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val isMusicAllowed = destination == null ||
-        !(destination.hasRoute<AppRoute.Countdown>() || destination.hasRoute<AppRoute.Game>())
+            !(destination.hasRoute<AppRoute.Countdown>() || destination.hasRoute<AppRoute.Game>())
     LaunchedEffect(key1 = isMusicAllowed) {
         onMusicAllowedChanged(isMusicAllowed)
     }
 
-    NavHost(navController = navController, startDestination = AppRoute.Start) {
+    NavHost(
+        navController = navController,
+        startDestination = AppRoute.Start,
+        enterTransition = { fadeIn(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
+        exitTransition = { fadeOut(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
+        popExitTransition = { fadeOut(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
+    ) {
         composable<AppRoute.Start> {
             StartScreen(
                 onStartGame = dropUnlessResumed { navController.navigate(route = AppRoute.Countdown) },
