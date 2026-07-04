@@ -3,6 +3,7 @@ package com.jaidensiu.quickMaths
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,6 +13,7 @@ import androidx.navigation.toRoute
 import com.jaidensiu.quickMaths.ui.CountdownScreen
 import com.jaidensiu.quickMaths.ui.GameScreen
 import com.jaidensiu.quickMaths.ui.ResultsScreen
+import com.jaidensiu.quickMaths.ui.SettingsScreen
 import com.jaidensiu.quickMaths.ui.StartScreen
 import com.jaidensiu.quickMaths.ui.TOTAL_QUESTIONS
 
@@ -29,7 +31,13 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
 
     NavHost(navController = navController, startDestination = AppRoute.Start) {
         composable<AppRoute.Start> {
-            StartScreen(onStartGame = { navController.navigate(route = AppRoute.Countdown) })
+            StartScreen(
+                onStartGame = dropUnlessResumed { navController.navigate(route = AppRoute.Countdown) },
+                onOpenSettings = dropUnlessResumed { navController.navigate(route = AppRoute.Settings) },
+            )
+        }
+        composable<AppRoute.Settings> {
+            SettingsScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
         composable<AppRoute.Countdown> {
             CountdownScreen(
@@ -47,7 +55,7 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
                         popUpTo<AppRoute.Game> { inclusive = true }
                     }
                 },
-                onExitGame = { navController.popBackStack() },
+                onExitGame = dropUnlessResumed { navController.popBackStack() },
             )
         }
         composable<AppRoute.Results> { backStackEntry ->
@@ -55,7 +63,7 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
             ResultsScreen(
                 elapsedTimeMs = route.elapsedTimeMs,
                 totalQuestions = TOTAL_QUESTIONS,
-                onBackToStart = { navController.popBackStack() },
+                onBackToStart = dropUnlessResumed { navController.popBackStack() },
             )
         }
     }

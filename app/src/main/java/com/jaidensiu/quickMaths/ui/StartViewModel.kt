@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaidensiu.quickMaths.data.BestTimeRepository
 import com.jaidensiu.quickMaths.data.NumberRecognizer
-import com.jaidensiu.quickMaths.data.ThemeRepository
-import com.jaidensiu.quickMaths.domain.ThemePreference
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +15,6 @@ import javax.inject.Inject
 @HiltViewModel
 class StartViewModel @Inject constructor(
     private val recognizer: NumberRecognizer,
-    private val themeRepository: ThemeRepository,
     private val bestTimeRepository: BestTimeRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(value = StartState())
@@ -25,11 +22,6 @@ class StartViewModel @Inject constructor(
 
     init {
         prepareModel()
-        viewModelScope.launch {
-            themeRepository.theme.collect { theme ->
-                _state.update { it.copy(themePreference = theme) }
-            }
-        }
         viewModelScope.launch {
             bestTimeRepository.bestTimeMs.collect { bestTimeMs ->
                 _state.update { it.copy(bestTimeMs = bestTimeMs) }
@@ -40,12 +32,6 @@ class StartViewModel @Inject constructor(
     fun onRetry() {
         if (_state.value.modelStatus == ModelStatus.ERROR) {
             prepareModel()
-        }
-    }
-
-    fun onThemeSelected(theme: ThemePreference) {
-        viewModelScope.launch {
-            themeRepository.setTheme(theme = theme)
         }
     }
 

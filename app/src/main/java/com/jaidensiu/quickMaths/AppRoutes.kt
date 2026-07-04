@@ -7,6 +7,9 @@ sealed class AppRoute {
     data object Start : AppRoute()
 
     @Serializable
+    data object Settings : AppRoute()
+
+    @Serializable
     data object Countdown : AppRoute()
 
     @Serializable
