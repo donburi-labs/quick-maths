@@ -10,6 +10,7 @@ data class GameState(
     val questionNumber: Int = 1,
     val totalQuestions: Int = TOTAL_QUESTIONS,
     val isFinished: Boolean = false,
+    val isPaused: Boolean = false,
     val elapsedTimeMs: Long = 0L,
     val canvasClearKey: Int = 0,
 )

@@ -1,6 +1,8 @@
 package com.jaidensiu.quickMaths.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,16 +23,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun GameScreen(
     onGameFinished: (elapsedTimeMs: Long) -> Unit,
+    onExitGame: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GameViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<HandwritingStroke>() }
+
+    // Swallow the back gesture; leaving the game is only possible via the pause menu.
+    BackHandler(enabled = !state.isFinished) {}
+
+    // Auto-pause when the app goes to the background so away-time doesn't count.
+    LifecycleEventEffect(event = Lifecycle.Event.ON_STOP) {
+        viewModel.onPause()
+    }
 
     LaunchedEffect(key1 = state.canvasClearKey) {
         strokes.clear()
@@ -43,55 +56,92 @@ fun GameScreen(
     }
 
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
-        if (!state.isFinished) {
-            Column(
-                modifier = Modifier.padding(paddingValues = innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "${state.questionNumber} / ${state.totalQuestions}",
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Text(
-                    text = state.question?.text.orEmpty(),
-                    style = MaterialTheme.typography.displayMedium,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+        when {
+            state.isFinished -> Unit
+            state.isPaused -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues = innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = "Your answer:",
-                        modifier = Modifier.padding(start = 16.dp),
+                        text = "Paused",
+                        style = MaterialTheme.typography.displayMedium,
                     )
-                    Text(
-                        text = state.recognizedText,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                    Spacer(modifier = Modifier.weight(weight = 1f))
                     TextButton(
-                        onClick = {
-                            strokes.clear()
-                            viewModel.onClear()
-                        },
-                        modifier = Modifier.padding(end = 8.dp),
+                        onClick = viewModel::onResume,
+                        modifier = Modifier.padding(top = 16.dp),
                     ) {
-                        Text(text = "Clear")
+                        Text(text = "Resume")
+                    }
+                    TextButton(onClick = onExitGame) {
+                        Text(text = "Exit")
                     }
                 }
-                HandwritingCanvas(
-                    strokes = strokes,
-                    onStrokeFinished = {
-                        strokes.add(it)
-                        viewModel.onStrokeFinished(stroke = it)
-                    },
-                    onStrokeStarted = viewModel::onStrokeStarted,
-                    onStrokeMoved = viewModel::onStrokeMoved,
-                    modifier = Modifier
-                        .weight(weight = 1f)
-                        .onSizeChanged { viewModel.onCanvasSizeChanged(size = it) },
-                )
+            }
+            else -> {
+                Column(
+                    modifier = Modifier.padding(paddingValues = innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "${state.questionNumber} / ${state.totalQuestions}",
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.align(alignment = Alignment.Center),
+                        )
+                        TextButton(
+                            onClick = viewModel::onPause,
+                            modifier = Modifier
+                                .align(alignment = Alignment.CenterEnd)
+                                .padding(end = 8.dp),
+                        ) {
+                            Text(text = "Pause")
+                        }
+                    }
+                    Text(
+                        text = state.question?.text.orEmpty(),
+                        style = MaterialTheme.typography.displayMedium,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Your answer:",
+                            modifier = Modifier.padding(start = 16.dp),
+                        )
+                        Text(
+                            text = state.recognizedText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                        Spacer(modifier = Modifier.weight(weight = 1f))
+                        TextButton(
+                            onClick = {
+                                strokes.clear()
+                                viewModel.onClear()
+                            },
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) {
+                            Text(text = "Clear")
+                        }
+                    }
+                    HandwritingCanvas(
+                        strokes = strokes,
+                        onStrokeFinished = {
+                            strokes.add(it)
+                            viewModel.onStrokeFinished(stroke = it)
+                        },
+                        onStrokeStarted = viewModel::onStrokeStarted,
+                        onStrokeMoved = viewModel::onStrokeMoved,
+                        modifier = Modifier
+                            .weight(weight = 1f)
+                            .onSizeChanged { viewModel.onCanvasSizeChanged(size = it) },
+                    )
+                }
             }
         }
     }

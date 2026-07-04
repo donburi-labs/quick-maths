@@ -47,6 +47,7 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
                         popUpTo<AppRoute.Game> { inclusive = true }
                     }
                 },
+                onExitGame = { navController.popBackStack() },
             )
         }
         composable<AppRoute.Results> { backStackEntry ->

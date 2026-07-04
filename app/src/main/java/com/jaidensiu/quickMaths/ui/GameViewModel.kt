@@ -28,6 +28,8 @@ class GameViewModel @Inject constructor(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     private val startTimeMs = SystemClock.elapsedRealtime()
+    private var totalPausedMs = 0L
+    private var pauseStartedAtMs = 0L
     private val strokes = mutableListOf<HandwritingStroke>()
     private var writingArea: IntSize? = null
     private var recognitionJob: Job? = null
@@ -84,6 +86,24 @@ class GameViewModel @Inject constructor(
         }
     }
 
+    fun onPause() {
+        if (_state.value.isPaused || _state.value.isFinished) {
+            return
+        }
+        pauseStartedAtMs = SystemClock.elapsedRealtime()
+        recognitionJob?.cancel()
+        stopPencil()
+        _state.update { it.copy(isPaused = true) }
+    }
+
+    fun onResume() {
+        if (!_state.value.isPaused) {
+            return
+        }
+        totalPausedMs += SystemClock.elapsedRealtime() - pauseStartedAtMs
+        _state.update { it.copy(isPaused = false) }
+    }
+
     fun onClear() {
         recognitionJob?.cancel()
         strokes.clear()
@@ -101,7 +121,7 @@ class GameViewModel @Inject constructor(
                 current.copy(
                     question = null,
                     isFinished = true,
-                    elapsedTimeMs = SystemClock.elapsedRealtime() - startTimeMs,
+                    elapsedTimeMs = SystemClock.elapsedRealtime() - startTimeMs - totalPausedMs,
                     recognizedText = "",
                     canvasClearKey = current.canvasClearKey + 1,
                 )
