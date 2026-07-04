@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.jaidensiu.quickMaths.ui.QuickMathsScreen
+import com.jaidensiu.quickMaths.QuickMathsApp
 import com.jaidensiu.quickMaths.ui.theme.QuickMathsTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             QuickMathsTheme {
-                QuickMathsScreen()
+                QuickMathsApp()
             }
         }
     }

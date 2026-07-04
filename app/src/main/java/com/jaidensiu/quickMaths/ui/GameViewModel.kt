@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaidensiu.quickMaths.data.NumberRecognizer
+import com.jaidensiu.quickMaths.domain.MathQuestion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +15,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class QuickMathsViewModel @Inject constructor(
+class GameViewModel @Inject constructor(
     private val recognizer: NumberRecognizer,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(value = QuickMathsState())
-    val state: StateFlow<QuickMathsState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(value = GameState(question = MathQuestion.random()))
+    val state: StateFlow<GameState> = _state.asStateFlow()
 
     private val strokes = mutableListOf<HandwritingStroke>()
     private var writingArea: IntSize? = null
@@ -45,7 +46,10 @@ class QuickMathsViewModel @Inject constructor(
                     writingAreaWidth = writingArea?.width?.toFloat(),
                     writingAreaHeight = writingArea?.height?.toFloat(),
                 )
-            }.onSuccess { text -> _state.update { it.copy(recognizedText = text) } }
+            }.onSuccess { text ->
+                _state.update { it.copy(recognizedText = text) }
+                checkAnswer(text = text)
+            }
         }
     }
 
@@ -53,6 +57,31 @@ class QuickMathsViewModel @Inject constructor(
         recognitionJob?.cancel()
         strokes.clear()
         _state.update { it.copy(recognizedText = "") }
+    }
+
+    private fun checkAnswer(text: String) {
+        val question = _state.value.question ?: return
+        if (text.trim() != question.answer.toString()) {
+            return
+        }
+        strokes.clear()
+        _state.update { current ->
+            if (current.questionNumber >= current.totalQuestions) {
+                current.copy(
+                    question = null,
+                    isFinished = true,
+                    recognizedText = "",
+                    canvasClearKey = current.canvasClearKey + 1,
+                )
+            } else {
+                current.copy(
+                    question = MathQuestion.random(),
+                    questionNumber = current.questionNumber + 1,
+                    recognizedText = "",
+                    canvasClearKey = current.canvasClearKey + 1,
+                )
+            }
+        }
     }
 
     override fun onCleared() {
