@@ -12,13 +12,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun QuickMathsScreen(
     modifier: Modifier = Modifier,
-    viewModel: QuickMathsViewModel = viewModel(),
+    viewModel: QuickMathsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strokes = remember { mutableStateListOf<HandwritingStroke>() }

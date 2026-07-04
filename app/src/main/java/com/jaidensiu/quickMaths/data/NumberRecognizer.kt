@@ -11,8 +11,9 @@ import com.google.mlkit.vision.digitalink.recognition.RecognitionContext
 import com.google.mlkit.vision.digitalink.recognition.WritingArea
 import com.jaidensiu.quickMaths.domain.HandwritingPoint
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class NumberRecognizer {
+class NumberRecognizer @Inject constructor() {
     private val model = DigitalInkRecognitionModel
         .builder(DigitalInkRecognitionModelIdentifier.EN_US)
         .build()
