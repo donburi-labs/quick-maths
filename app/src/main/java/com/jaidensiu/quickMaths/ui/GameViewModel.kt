@@ -10,6 +10,7 @@ import com.jaidensiu.quickMaths.data.SoundManager
 import com.jaidensiu.quickMaths.domain.MathQuestion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,7 @@ class GameViewModel @Inject constructor(
     private val strokes = mutableListOf<HandwritingStroke>()
     private var writingArea: IntSize? = null
     private var recognitionJob: Job? = null
+    private var pencilIdleJob: Job? = null
 
     init {
         // No-op after StartScreen has prepared the model; covers process-death restore.
@@ -45,14 +47,27 @@ class GameViewModel @Inject constructor(
     fun onStrokeStarted() {
         recognitionJob?.cancel()
         soundManager.startPencil()
+        scheduleIdleMute()
     }
 
     fun onStrokeMoved(speedPxPerMs: Float) {
+        if (speedPxPerMs < PENCIL_MIN_SPEED_PX_PER_MS) {
+            return
+        }
         soundManager.updatePencilSpeed(speedPxPerMs = speedPxPerMs)
+        scheduleIdleMute()
+    }
+
+    private fun scheduleIdleMute() {
+        pencilIdleJob?.cancel()
+        pencilIdleJob = viewModelScope.launch {
+            delay(timeMillis = PENCIL_IDLE_TIMEOUT_MS)
+            soundManager.mutePencil()
+        }
     }
 
     fun onStrokeFinished(stroke: HandwritingStroke) {
-        soundManager.stopPencil()
+        stopPencil()
         strokes.add(stroke)
         recognitionJob?.cancel()
         recognitionJob = viewModelScope.launch {
@@ -110,7 +125,17 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
+    private fun stopPencil() {
+        pencilIdleJob?.cancel()
         soundManager.stopPencil()
+    }
+
+    override fun onCleared() {
+        stopPencil()
+    }
+
+    private companion object {
+        const val PENCIL_MIN_SPEED_PX_PER_MS = 0.01f
+        const val PENCIL_IDLE_TIMEOUT_MS = 50L
     }
 }
