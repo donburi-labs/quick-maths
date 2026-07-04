@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -16,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jaidensiu.quickMaths.domain.ThemePreference
 
 @Composable
 fun StartScreen(
@@ -66,6 +70,27 @@ fun StartScreen(
                     Text(text = "Retry")
                 }
             }
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(top = 32.dp)) {
+                ThemePreference.entries.forEachIndexed { index, preference ->
+                    SegmentedButton(
+                        selected = state.themePreference == preference,
+                        onClick = { viewModel.onThemeSelected(theme = preference) },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = ThemePreference.entries.size,
+                        ),
+                    ) {
+                        Text(text = preference.label)
+                    }
+                }
+            }
         }
     }
 }
+
+private val ThemePreference.label: String
+    get() = when (this) {
+        ThemePreference.LIGHT -> "Light"
+        ThemePreference.DARK -> "Dark"
+        ThemePreference.SYSTEM -> "System"
+    }

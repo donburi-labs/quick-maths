@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.jaidensiu.quickMaths.domain.ThemePreference
 
 private val LightColorScheme = lightColorScheme(
     primary = Blue40,
@@ -39,9 +40,15 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun QuickMathsTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themePreference: ThemePreference = ThemePreference.LIGHT,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = when (themePreference) {
+        ThemePreference.LIGHT -> false
+        ThemePreference.DARK -> true
+        ThemePreference.SYSTEM -> isSystemInDarkTheme()
+    }
+
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = Typography,
