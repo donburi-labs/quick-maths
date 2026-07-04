@@ -3,8 +3,7 @@ package com.jaidensiu.quickMaths.data
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.stringPreferencesKey
-import com.jaidensiu.quickMaths.domain.ThemePreference
+import androidx.datastore.preferences.core.longPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -14,10 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ThemeRepository @Inject constructor(
+class BestTimeRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
-    val theme: Flow<ThemePreference> = context.settingsDataStore.data
+    val bestTimeMs: Flow<Long?> = context.settingsDataStore.data
         .catch { error ->
             if (error is IOException) {
                 emit(value = emptyPreferences())
@@ -25,17 +24,18 @@ class ThemeRepository @Inject constructor(
                 throw error
             }
         }
-        .map { preferences ->
-            preferences[THEME_KEY]
-                ?.let { saved -> ThemePreference.entries.firstOrNull { it.name == saved } }
-                ?: ThemePreference.LIGHT
-        }
+        .map { preferences -> preferences[BEST_TIME_KEY] }
 
-    suspend fun setTheme(theme: ThemePreference) {
-        context.settingsDataStore.edit { it[THEME_KEY] = theme.name }
+    suspend fun submitTime(timeMs: Long) {
+        context.settingsDataStore.edit { preferences ->
+            val current = preferences[BEST_TIME_KEY]
+            if (current == null || timeMs < current) {
+                preferences[BEST_TIME_KEY] = timeMs
+            }
+        }
     }
 
     private companion object {
-        val THEME_KEY = stringPreferencesKey(name = "theme_preference")
+        val BEST_TIME_KEY = longPreferencesKey(name = "best_time_ms")
     }
 }

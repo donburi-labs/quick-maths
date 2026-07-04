@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jaidensiu.quickMaths.data.BestTimeRepository
 import com.jaidensiu.quickMaths.data.NumberRecognizer
 import com.jaidensiu.quickMaths.domain.MathQuestion
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val recognizer: NumberRecognizer,
+    private val bestTimeRepository: BestTimeRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(value = GameState(question = MathQuestion.random()))
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -83,6 +85,12 @@ class GameViewModel @Inject constructor(
                     recognizedText = "",
                     canvasClearKey = current.canvasClearKey + 1,
                 )
+            }
+        }
+        val finished = _state.value
+        if (finished.isFinished) {
+            viewModelScope.launch {
+                runCatching { bestTimeRepository.submitTime(timeMs = finished.elapsedTimeMs) }
             }
         }
     }

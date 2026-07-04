@@ -46,6 +46,14 @@ fun StartScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(top = 8.dp),
             )
+            state.bestTimeMs?.let { bestTimeMs ->
+                Text(
+                    text = "Best time: ${Util.formatElapsedTime(elapsedTimeMs = bestTimeMs)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
             Button(
                 onClick = onStartGame,
                 enabled = state.modelStatus == ModelStatus.READY,

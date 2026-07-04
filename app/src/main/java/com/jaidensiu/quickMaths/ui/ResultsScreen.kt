@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 
 @Composable
 fun ResultsScreen(
@@ -34,7 +33,7 @@ fun ResultsScreen(
                 style = MaterialTheme.typography.headlineMedium,
             )
             Text(
-                text = formatElapsedTime(elapsedTimeMs = elapsedTimeMs),
+                text = Util.formatElapsedTime(elapsedTimeMs = elapsedTimeMs),
                 style = MaterialTheme.typography.displayLarge,
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -45,15 +44,5 @@ fun ResultsScreen(
                 Text(text = "Back to start")
             }
         }
-    }
-}
-
-private fun formatElapsedTime(elapsedTimeMs: Long): String {
-    val minutes = elapsedTimeMs / 60_000
-    val seconds = (elapsedTimeMs % 60_000) / 1000.0
-    return if (minutes > 0) {
-        String.format(Locale.US, "%d:%05.2f", minutes, seconds)
-    } else {
-        String.format(Locale.US, "%.2fs", seconds)
     }
 }

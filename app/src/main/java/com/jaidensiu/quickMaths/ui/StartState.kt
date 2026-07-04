@@ -11,4 +11,5 @@ enum class ModelStatus {
 data class StartState(
     val modelStatus: ModelStatus = ModelStatus.LOADING,
     val themePreference: ThemePreference = ThemePreference.LIGHT,
+    val bestTimeMs: Long? = null,
 )

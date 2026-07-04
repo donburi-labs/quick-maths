@@ -2,6 +2,7 @@ package com.jaidensiu.quickMaths.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jaidensiu.quickMaths.data.BestTimeRepository
 import com.jaidensiu.quickMaths.data.NumberRecognizer
 import com.jaidensiu.quickMaths.data.ThemeRepository
 import com.jaidensiu.quickMaths.domain.ThemePreference
@@ -17,6 +18,7 @@ import javax.inject.Inject
 class StartViewModel @Inject constructor(
     private val recognizer: NumberRecognizer,
     private val themeRepository: ThemeRepository,
+    private val bestTimeRepository: BestTimeRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(value = StartState())
     val state: StateFlow<StartState> = _state.asStateFlow()
@@ -26,6 +28,11 @@ class StartViewModel @Inject constructor(
         viewModelScope.launch {
             themeRepository.theme.collect { theme ->
                 _state.update { it.copy(themePreference = theme) }
+            }
+        }
+        viewModelScope.launch {
+            bestTimeRepository.bestTimeMs.collect { bestTimeMs ->
+                _state.update { it.copy(bestTimeMs = bestTimeMs) }
             }
         }
     }
