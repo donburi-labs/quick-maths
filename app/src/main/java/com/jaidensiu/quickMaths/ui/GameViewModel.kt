@@ -43,6 +43,7 @@ class GameViewModel @Inject constructor(
     }
 
     fun onStrokeStarted() {
+        recognitionJob?.cancel()
         soundManager.startPencil()
     }
 
