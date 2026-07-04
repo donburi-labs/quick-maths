@@ -3,9 +3,13 @@ package com.jaidensiu.quickMaths
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
@@ -37,6 +41,9 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
     NavHost(
         navController = navController,
         startDestination = AppRoute.Start,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.background),
         enterTransition = { fadeIn(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
         exitTransition = { fadeOut(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
         popEnterTransition = { fadeIn(animationSpec = tween(durationMillis = NAV_TRANSITION_MS)) },
