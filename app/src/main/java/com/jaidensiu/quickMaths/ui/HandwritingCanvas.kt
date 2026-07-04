@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,7 +29,7 @@ fun HandwritingCanvas(
     onStrokeFinished: (HandwritingStroke) -> Unit,
     modifier: Modifier = Modifier,
     strokeWidth: Dp = 4.dp,
-    strokeColor: Color = Color.Black,
+    strokeColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     val currentPath = remember { Path() }
     var invalidateTick by remember { mutableIntStateOf(value = 0) }
