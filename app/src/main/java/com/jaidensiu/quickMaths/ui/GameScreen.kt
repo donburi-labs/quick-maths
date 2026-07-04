@@ -68,7 +68,8 @@ fun GameScreen(
                         onClick = {
                             strokes.clear()
                             viewModel.onClear()
-                        }
+                        },
+                        modifier = Modifier.padding(end = 8.dp),
                     ) {
                         Text(text = "Clear")
                     }
