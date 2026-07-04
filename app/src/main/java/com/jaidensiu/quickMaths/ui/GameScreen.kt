@@ -79,6 +79,8 @@ fun GameScreen(
                         strokes.add(it)
                         viewModel.onStrokeFinished(stroke = it)
                     },
+                    onStrokeStarted = viewModel::onStrokeStarted,
+                    onStrokeMoved = viewModel::onStrokeMoved,
                     modifier = Modifier
                         .weight(weight = 1f)
                         .onSizeChanged { viewModel.onCanvasSizeChanged(size = it) },

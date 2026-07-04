@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaidensiu.quickMaths.data.BestTimeRepository
 import com.jaidensiu.quickMaths.data.NumberRecognizer
+import com.jaidensiu.quickMaths.data.SoundManager
 import com.jaidensiu.quickMaths.domain.MathQuestion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -20,6 +21,7 @@ import javax.inject.Inject
 class GameViewModel @Inject constructor(
     private val recognizer: NumberRecognizer,
     private val bestTimeRepository: BestTimeRepository,
+    private val soundManager: SoundManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(value = GameState(question = MathQuestion.random()))
     val state: StateFlow<GameState> = _state.asStateFlow()
@@ -40,7 +42,16 @@ class GameViewModel @Inject constructor(
         writingArea = size
     }
 
+    fun onStrokeStarted() {
+        soundManager.startPencil()
+    }
+
+    fun onStrokeMoved(speedPxPerMs: Float) {
+        soundManager.updatePencilSpeed(speedPxPerMs = speedPxPerMs)
+    }
+
     fun onStrokeFinished(stroke: HandwritingStroke) {
+        soundManager.stopPencil()
         strokes.add(stroke)
         recognitionJob?.cancel()
         recognitionJob = viewModelScope.launch {
@@ -89,9 +100,16 @@ class GameViewModel @Inject constructor(
         }
         val finished = _state.value
         if (finished.isFinished) {
+            soundManager.playFinish()
             viewModelScope.launch {
                 runCatching { bestTimeRepository.submitTime(timeMs = finished.elapsedTimeMs) }
             }
+        } else {
+            soundManager.playCorrect()
         }
+    }
+
+    override fun onCleared() {
+        soundManager.stopPencil()
     }
 }

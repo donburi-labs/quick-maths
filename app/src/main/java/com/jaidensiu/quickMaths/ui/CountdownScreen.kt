@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 private const val COUNTDOWN_START = 3
 private const val COUNT_DURATION_MS = 1000
@@ -26,6 +27,7 @@ private const val COUNT_DURATION_MS = 1000
 fun CountdownScreen(
     onCountdownFinished: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: CountdownViewModel = hiltViewModel(),
 ) {
     var count by remember { mutableIntStateOf(value = COUNTDOWN_START) }
     var progress by remember { mutableFloatStateOf(value = 0f) }
@@ -33,6 +35,7 @@ fun CountdownScreen(
     LaunchedEffect(key1 = Unit) {
         for (value in COUNTDOWN_START downTo 1) {
             count = value
+            viewModel.onCountShown()
             animate(
                 initialValue = 0f,
                 targetValue = 1f,

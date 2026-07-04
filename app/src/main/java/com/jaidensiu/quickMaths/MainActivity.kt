@@ -21,8 +21,18 @@ class MainActivity : ComponentActivity() {
             val theme by viewModel.theme.collectAsStateWithLifecycle()
 
             QuickMathsTheme(themePreference = theme) {
-                QuickMathsApp()
+                QuickMathsApp(onMusicAllowedChanged = viewModel::onMusicAllowedChanged)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onAppForegrounded()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.onAppBackgrounded()
     }
 }

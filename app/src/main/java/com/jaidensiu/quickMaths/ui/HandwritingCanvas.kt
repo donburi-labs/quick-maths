@@ -28,6 +28,8 @@ fun HandwritingCanvas(
     strokes: List<HandwritingStroke>,
     onStrokeFinished: (HandwritingStroke) -> Unit,
     modifier: Modifier = Modifier,
+    onStrokeStarted: () -> Unit = {},
+    onStrokeMoved: (speedPxPerMs: Float) -> Unit = {},
     strokeWidth: Dp = 4.dp,
     strokeColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
@@ -52,7 +54,9 @@ fun HandwritingCanvas(
                         )
                     )
                     var last = down.position
+                    var lastMoveUptime = down.uptimeMillis
                     invalidateTick++
+                    onStrokeStarted()
 
                     fun extendTo(position: Offset, timeMillis: Long) {
                         val mid = Offset(
@@ -78,12 +82,19 @@ fun HandwritingCanvas(
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.first()
+                        val previousPosition = last
+                        val elapsedMs = change.uptimeMillis - lastMoveUptime
                         change.historical.forEach {
                             extendTo(position = it.position, timeMillis = it.uptimeMillis)
                         }
                         extendTo(position = change.position, timeMillis = change.uptimeMillis)
                         change.consume()
                         invalidateTick++
+                        if (elapsedMs > 0) {
+                            val distance = (change.position - previousPosition).getDistance()
+                            onStrokeMoved(distance / elapsedMs)
+                            lastMoveUptime = change.uptimeMillis
+                        }
                         if (event.changes.none { it.pressed }) {
                             break
                         }
