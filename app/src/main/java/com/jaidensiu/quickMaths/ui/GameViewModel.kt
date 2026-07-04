@@ -32,9 +32,9 @@ class GameViewModel @Inject constructor(
     private var recognitionJob: Job? = null
 
     init {
+        // No-op after StartScreen has prepared the model; covers process-death restore.
         viewModelScope.launch {
             runCatching { recognizer.prepare() }
-                .onSuccess { _state.update { it.copy(isRecognizerReady = true) } }
         }
     }
 
@@ -62,7 +62,7 @@ class GameViewModel @Inject constructor(
                     writingAreaHeight = writingArea?.height?.toFloat(),
                 )
             }.onSuccess { text ->
-                _state.update { it.copy(recognizedText = text) }
+                _state.update { it.copy(recognizedText = text.ifBlank { "?" }) }
                 checkAnswer(text = text)
             }
         }

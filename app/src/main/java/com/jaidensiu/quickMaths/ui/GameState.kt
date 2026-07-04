@@ -6,7 +6,6 @@ const val TOTAL_QUESTIONS = 20
 
 data class GameState(
     val recognizedText: String = "",
-    val isRecognizerReady: Boolean = false,
     val question: MathQuestion? = null,
     val questionNumber: Int = 1,
     val totalQuestions: Int = TOTAL_QUESTIONS,

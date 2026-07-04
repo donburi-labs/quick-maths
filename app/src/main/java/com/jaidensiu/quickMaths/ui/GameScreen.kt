@@ -3,6 +3,7 @@ package com.jaidensiu.quickMaths.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -57,13 +58,18 @@ fun GameScreen(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = if (state.isRecognizerReady) state.recognizedText else "Loading model…",
+                        text = "Your answer:",
                         modifier = Modifier.padding(start = 16.dp),
                     )
+                    Text(
+                        text = state.recognizedText,
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                    Spacer(modifier = Modifier.weight(weight = 1f))
                     TextButton(
                         onClick = {
                             strokes.clear()
