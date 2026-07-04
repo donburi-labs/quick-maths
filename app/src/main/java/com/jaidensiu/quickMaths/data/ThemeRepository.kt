@@ -7,9 +7,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.jaidensiu.quickMaths.domain.ThemePreference
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +25,8 @@ private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 class ThemeRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) {
-    val theme: Flow<ThemePreference> = context.settingsDataStore.data
+    private val scope = CoroutineScope(context = SupervisorJob() + Dispatchers.IO)
+    val theme: StateFlow<ThemePreference> = context.settingsDataStore.data
         .catch { error ->
             if (error is IOException) {
                 emit(value = emptyPreferences())
@@ -33,6 +39,11 @@ class ThemeRepository @Inject constructor(
                 ?.let { saved -> ThemePreference.entries.firstOrNull { it.name == saved } }
                 ?: ThemePreference.LIGHT
         }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
+            initialValue = ThemePreference.LIGHT,
+        )
 
     suspend fun setTheme(theme: ThemePreference) {
         context.settingsDataStore.edit { it[THEME_KEY] = theme.name }

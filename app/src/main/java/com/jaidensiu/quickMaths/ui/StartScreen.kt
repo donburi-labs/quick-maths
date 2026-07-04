@@ -102,7 +102,7 @@ fun StartScreen(
                     Text(
                         text = when (state.modelStatus) {
                             ModelStatus.LOADING -> "Loading model..."
-                            ModelStatus.READY -> "Start Game"
+                            ModelStatus.READY -> "Start game"
                             ModelStatus.ERROR -> "Model loading error"
                         }
                     )
