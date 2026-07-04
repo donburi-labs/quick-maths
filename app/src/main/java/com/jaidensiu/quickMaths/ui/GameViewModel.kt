@@ -83,8 +83,4 @@ class GameViewModel @Inject constructor(
             }
         }
     }
-
-    override fun onCleared() {
-        recognizer.close()
-    }
 }

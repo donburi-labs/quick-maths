@@ -10,9 +10,13 @@ import com.google.mlkit.vision.digitalink.recognition.Ink
 import com.google.mlkit.vision.digitalink.recognition.RecognitionContext
 import com.google.mlkit.vision.digitalink.recognition.WritingArea
 import com.jaidensiu.quickMaths.domain.HandwritingPoint
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class NumberRecognizer @Inject constructor() {
     private val model = DigitalInkRecognitionModel
         .builder(DigitalInkRecognitionModelIdentifier.EN_US)
@@ -20,12 +24,20 @@ class NumberRecognizer @Inject constructor() {
     private val recognizer = DigitalInkRecognition.getClient(
         DigitalInkRecognizerOptions.builder(model).build(),
     )
+    private val prepareMutex = Mutex()
+    private var isPrepared = false
 
     suspend fun prepare() {
-        RemoteModelManager.getInstance()
-            .download(model, DownloadConditions.Builder().build())
-            .await()
-        warmUp()
+        prepareMutex.withLock {
+            if (isPrepared) {
+                return
+            }
+            RemoteModelManager.getInstance()
+                .download(model, DownloadConditions.Builder().build())
+                .await()
+            warmUp()
+            isPrepared = true
+        }
     }
 
     suspend fun recognize(
@@ -56,10 +68,6 @@ class NumberRecognizer @Inject constructor() {
         return candidates.firstNotNullOfOrNull { candidate ->
             candidate.text.trim().takeIf { it.matches(regex = NUMBER_REGEX) }
         } ?: candidates.firstOrNull()?.text?.filter(Char::isDigit).orEmpty()
-    }
-
-    fun close() {
-        recognizer.close()
     }
 
     private suspend fun warmUp() {
