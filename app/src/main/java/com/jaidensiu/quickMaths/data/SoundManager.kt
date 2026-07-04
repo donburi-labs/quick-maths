@@ -12,10 +12,10 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.jaidensiu.quickMaths.R
-import androidx.media3.common.AudioAttributes as Media3AudioAttributes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.media3.common.AudioAttributes as Media3AudioAttributes
 
 @Singleton
 class SoundManager @Inject constructor(
@@ -44,7 +44,6 @@ class SoundManager @Inject constructor(
     }
 
     private val correctId = soundPool.load(context, R.raw.sfx_correct, 1)
-    private val finishId = soundPool.load(context, R.raw.sfx_finish, 1)
     private val tickId = soundPool.load(context, R.raw.sfx_tick, 1)
     private val pencilId = soundPool.load(context, R.raw.sfx_pencil_scratch, 1)
 
@@ -52,11 +51,13 @@ class SoundManager @Inject constructor(
     private var pencilStartedAtMs = 0L
     private var musicPlayer: ExoPlayer? = null
 
-    fun playCorrect() = playOnce(sampleId = correctId)
+    fun playCorrect() {
+        playOnce(sampleId = correctId)
+    }
 
-    fun playFinish() = playOnce(sampleId = finishId)
-
-    fun playTick() = playOnce(sampleId = tickId)
+    fun playTick() {
+        playOnce(sampleId = tickId)
+    }
 
     /**
      * Start on touch-down so SoundPool's play() startup latency isn't heard on the

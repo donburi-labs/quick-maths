@@ -136,7 +136,6 @@ class GameViewModel @Inject constructor(
         }
         val finished = _state.value
         if (finished.isFinished) {
-            soundManager.playFinish()
             viewModelScope.launch {
                 runCatching { bestTimeRepository.submitTime(timeMs = finished.elapsedTimeMs) }
             }
