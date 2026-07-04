@@ -11,4 +11,7 @@ sealed class AppRoute {
 
     @Serializable
     data object Game : AppRoute()
+
+    @Serializable
+    data class Results(val elapsedTimeMs: Long) : AppRoute()
 }

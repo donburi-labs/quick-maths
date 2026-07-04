@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,7 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun GameScreen(
-    onBackToStart: () -> Unit,
+    onGameFinished: (elapsedTimeMs: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GameViewModel = hiltViewModel(),
 ) {
@@ -36,27 +35,14 @@ fun GameScreen(
         strokes.clear()
     }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    LaunchedEffect(key1 = state.isFinished) {
         if (state.isFinished) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues = innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = "All ${state.totalQuestions} solved!",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                Button(
-                    onClick = onBackToStart,
-                    modifier = Modifier.padding(top = 24.dp),
-                ) {
-                    Text(text = "Back to start")
-                }
-            }
-        } else {
+            onGameFinished(state.elapsedTimeMs)
+        }
+    }
+
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+        if (!state.isFinished) {
             Column(
                 modifier = Modifier.padding(paddingValues = innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,

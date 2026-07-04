@@ -1,5 +1,6 @@
 package com.jaidensiu.quickMaths.ui
 
+import android.os.SystemClock
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,6 +22,7 @@ class GameViewModel @Inject constructor(
     private val _state = MutableStateFlow(value = GameState(question = MathQuestion.random()))
     val state: StateFlow<GameState> = _state.asStateFlow()
 
+    private val startTimeMs = SystemClock.elapsedRealtime()
     private val strokes = mutableListOf<HandwritingStroke>()
     private var writingArea: IntSize? = null
     private var recognitionJob: Job? = null
@@ -70,6 +72,7 @@ class GameViewModel @Inject constructor(
                 current.copy(
                     question = null,
                     isFinished = true,
+                    elapsedTimeMs = SystemClock.elapsedRealtime() - startTimeMs,
                     recognizedText = "",
                     canvasClearKey = current.canvasClearKey + 1,
                 )
