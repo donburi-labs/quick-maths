@@ -40,7 +40,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun QuickMathsTheme(
-    themePreference: ThemePreference = ThemePreference.LIGHT,
+    themePreference: ThemePreference = ThemePreference.SYSTEM,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = when (themePreference) {

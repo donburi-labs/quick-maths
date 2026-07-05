@@ -37,12 +37,12 @@ class ThemeRepository @Inject constructor(
         .map { preferences ->
             preferences[THEME_KEY]
                 ?.let { saved -> ThemePreference.entries.firstOrNull { it.name == saved } }
-                ?: ThemePreference.LIGHT
+                ?: ThemePreference.SYSTEM
         }
         .stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
-            initialValue = ThemePreference.LIGHT,
+            initialValue = ThemePreference.SYSTEM,
         )
 
     suspend fun setTheme(theme: ThemePreference) {
