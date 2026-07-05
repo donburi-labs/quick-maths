@@ -29,11 +29,11 @@ private const val NAV_TRANSITION_MS = 300
 @Composable
 fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
     val navController = rememberNavController()
-
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val isMusicAllowed = destination == null ||
             !(destination.hasRoute<AppRoute.Countdown>() || destination.hasRoute<AppRoute.Game>())
+
     LaunchedEffect(key1 = isMusicAllowed) {
         onMusicAllowedChanged(isMusicAllowed)
     }
@@ -82,7 +82,12 @@ fun QuickMathsApp(onMusicAllowedChanged: (Boolean) -> Unit = {}) {
             ResultsScreen(
                 elapsedTimeMs = route.elapsedTimeMs,
                 totalQuestions = TOTAL_QUESTIONS,
-                onBackToStart = dropUnlessResumed { navController.popBackStack() },
+                onPlayAgain = dropUnlessResumed {
+                    navController.navigate(route = AppRoute.Countdown) {
+                        popUpTo<AppRoute.Results> { inclusive = true }
+                    }
+                },
+                onBackToHome = dropUnlessResumed { navController.popBackStack() },
             )
         }
     }

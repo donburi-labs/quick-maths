@@ -1,5 +1,6 @@
 package com.jaidensiu.quickMaths.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,8 @@ fun CountdownScreen(
 ) {
     var count by remember { mutableIntStateOf(value = COUNTDOWN_START) }
     var progress by remember { mutableFloatStateOf(value = 0f) }
+
+    BackHandler {}
 
     LaunchedEffect(key1 = Unit) {
         for (value in COUNTDOWN_START downTo 1) {

@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -20,12 +21,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun ResultsScreen(
     elapsedTimeMs: Long,
     totalQuestions: Int,
-    onBackToStart: () -> Unit,
+    onPlayAgain: () -> Unit,
+    onBackToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ResultsViewModel = hiltViewModel(),
 ) {
     val storedBestTimeMs by viewModel.bestTimeMs.collectAsStateWithLifecycle()
     val bestTimeMs = (storedBestTimeMs ?: elapsedTimeMs).coerceAtMost(maximumValue = elapsedTimeMs)
+
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
@@ -49,10 +52,16 @@ fun ResultsScreen(
                 modifier = Modifier.padding(top = 16.dp),
             )
             Button(
-                onClick = onBackToStart,
+                onClick = onPlayAgain,
                 modifier = Modifier.padding(top = 32.dp),
             ) {
-                Text(text = "Back to start")
+                Text(text = "Play again")
+            }
+            TextButton(
+                onClick = onBackToHome,
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text(text = "Back to home")
             }
         }
     }
