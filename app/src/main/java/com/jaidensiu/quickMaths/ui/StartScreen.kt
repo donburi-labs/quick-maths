@@ -55,13 +55,11 @@ fun StartScreen(
                     }
                 },
                 actions = {
-                    if (strokes.isNotEmpty()) {
-                        TextButton(onClick = { strokes.clear() }) {
-                            Text(
-                                text = "Clear",
-                                style = MaterialTheme.typography.titleLarge,
-                            )
-                        }
+                    TextButton(onClick = strokes::clear) {
+                        Text(
+                            text = "Clear",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
                     }
                 },
             )
