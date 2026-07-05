@@ -16,12 +16,12 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.jaidensiu.quickMaths"
+    namespace = "io.github.donburilabs.quickMaths"
     compileSdk {
         version = release(version = 37)
     }
     defaultConfig {
-        applicationId = "com.jaidensiu.quickMaths"
+        applicationId = "io.github.donburilabs.quickMaths"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
