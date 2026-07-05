@@ -10,3 +10,21 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# ML Kit transitively pulls androidx.work 2.7.0 / Room 2.2.5, whose bundled
+# rules predate R8 full mode: Room instantiates *_Impl databases reflectively,
+# so keep their no-arg constructors or the app crashes on startup.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+
+# ML Kit's bundled rules don't survive R8 full mode: the digital ink model
+# identifier's internal static state gets stripped (NPE constructing the
+# recognizer), and its firebase-components dependency registry desyncs when
+# any subset of the SDK is rewritten ("Unsatisfied dependency" at
+# MlKitInitProvider). The scope is deliberate, not lazy: narrower keeps
+# (digitalink alone; + common.sdkinternal; + firebase.components) each crashed
+# on-device with the next unsatisfied component, because the SDK's reflective
+# component graph spans all of its packages. Only digital-ink + mlkit-common
+# live under this prefix in this app, and the measured size cost is ~1 MB.
+# Revisit if mlkit:digital-ink-recognition ever moves past 19.0.0.
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.firebase.components.** { *; }
