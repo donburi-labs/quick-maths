@@ -27,6 +27,10 @@ class NumberRecognizer @Inject constructor() {
     private val prepareMutex = Mutex()
     private var isPrepared = false
 
+    suspend fun isModelDownloaded(): Boolean {
+        return isPrepared || RemoteModelManager.getInstance().isModelDownloaded(model).await()
+    }
+
     suspend fun prepare() {
         prepareMutex.withLock {
             if (isPrepared) {

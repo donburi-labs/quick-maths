@@ -2,6 +2,7 @@ package io.github.donburilabs.quickMaths.ui
 
 enum class ModelStatus {
     LOADING,
+    OFFLINE,
     READY,
     ERROR,
 }

@@ -100,21 +100,33 @@ fun StartScreen(
                     Text(
                         text = when (state.modelStatus) {
                             ModelStatus.LOADING -> "Loading model..."
+                            ModelStatus.OFFLINE -> "No connection"
                             ModelStatus.READY -> "Start game"
                             ModelStatus.ERROR -> "Model loading error"
                         }
                     )
                 }
-                if (state.modelStatus == ModelStatus.ERROR) {
-                    Text(
-                        text = "Couldn't download the handwriting model",
+                when (state.modelStatus) {
+                    ModelStatus.OFFLINE -> Text(
+                        text = "Connect to the internet to download the handwriting model",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(top = 16.dp),
                     )
-                    TextButton(onClick = viewModel::onRetry) {
-                        Text(text = "Retry")
+
+                    ModelStatus.ERROR -> {
+                        Text(
+                            text = "Couldn't download the handwriting model",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 16.dp),
+                        )
+                        TextButton(onClick = viewModel::onRetry) {
+                            Text(text = "Retry")
+                        }
                     }
+
+                    else -> Unit
                 }
             }
         }
