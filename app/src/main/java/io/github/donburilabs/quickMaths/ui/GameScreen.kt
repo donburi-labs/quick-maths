@@ -142,6 +142,7 @@ fun GameScreen(
                         },
                         onStrokeStarted = viewModel::onStrokeStarted,
                         onStrokeMoved = viewModel::onStrokeMoved,
+                        clearKey = state.canvasClearKey,
                         modifier = Modifier
                             .weight(weight = 1f)
                             .onSizeChanged { viewModel.onCanvasSizeChanged(size = it) },

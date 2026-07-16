@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.media3.common.AudioAttributes as Media3AudioAttributes
 
 @Singleton
@@ -101,7 +102,7 @@ class SoundManager @Inject constructor(
         isForegrounded = false
         pendingBackgroundStop?.cancel()
         pendingBackgroundStop = scope.launch {
-            delay(STREAM_RELEASE_DELAY_MS)
+            delay(duration = STREAM_RELEASE_DELAY_MS.milliseconds)
             if (isNativeSfxReady && !isForegrounded) {
                 nativeSfx.setForeground(foreground = false)
             }
@@ -126,7 +127,11 @@ class SoundManager @Inject constructor(
             ?.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)?.toIntOrNull() ?: 0
         val deviceFramesPerBurst = audioManager
             ?.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)?.toIntOrNull() ?: 0
-        if (!nativeSfx.init(deviceSampleRate, deviceFramesPerBurst)) {
+        if (!nativeSfx.init(
+                defaultSampleRate = deviceSampleRate,
+                defaultFramesPerBurst = deviceFramesPerBurst
+            )
+        ) {
             Log.w(TAG, "Oboe stream unavailable; SFX disabled")
             return
         }
