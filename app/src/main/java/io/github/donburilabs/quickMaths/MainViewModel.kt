@@ -20,6 +20,7 @@ class MainViewModel @Inject constructor(
 
     fun onAppForegrounded() {
         isAppForegrounded = true
+        soundManager.onAppForegrounded()
         updateMusic()
     }
 
@@ -27,6 +28,7 @@ class MainViewModel @Inject constructor(
         isAppForegrounded = false
         updateMusic()
         soundManager.stopPencil()
+        soundManager.onAppBackgrounded()
     }
 
     fun onMusicAllowedChanged(allowed: Boolean) {

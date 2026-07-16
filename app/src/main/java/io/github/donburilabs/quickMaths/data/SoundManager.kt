@@ -1,8 +1,7 @@
 package io.github.donburilabs.quickMaths.data
 
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.SoundPool
+import android.media.AudioManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.net.toUri
@@ -13,6 +12,12 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import io.github.donburilabs.quickMaths.R
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.media3.common.AudioAttributes as Media3AudioAttributes
@@ -20,92 +25,87 @@ import androidx.media3.common.AudioAttributes as Media3AudioAttributes
 @Singleton
 class SoundManager @Inject constructor(
     @param:ApplicationContext private val context: Context,
+    private val nativeSfx: NativeSfxEngine,
+    private val sfxDecoder: SfxPcmDecoder,
 ) {
-    private val soundPool = SoundPool.Builder()
-        .setMaxStreams(MAX_STREAMS)
-        .setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-        )
-        .build()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val loadedSampleIds = mutableSetOf<Int>()
+    @Volatile
+    private var isNativeSfxReady = false
 
-    init {
-        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0) {
-                loadedSampleIds.add(sampleId)
-            } else {
-                Log.w(TAG, "Failed to load sample $sampleId (status=$status)")
-            }
-        }
-    }
+    @Volatile
+    private var isForegrounded = true
 
-    private val correctId = soundPool.load(context, R.raw.sfx_correct, 1)
-    private val tickId = soundPool.load(context, R.raw.sfx_tick, 1)
-    private val pencilId = soundPool.load(context, R.raw.sfx_pencil_scratch, 1)
-
-    private var pencilStreamId = 0
+    private var pencilVoiceHandle = NativeSfxEngine.INVALID_HANDLE
     private var pencilStartedAtMs = 0L
     private var musicPlayer: ExoPlayer? = null
+    private var pendingBackgroundStop: Job? = null
+
+    init {
+        scope.launch { initNativeSfx() }
+    }
 
     fun playCorrect() {
-        playOnce(sampleId = correctId)
+        playOnce(sampleId = SAMPLE_CORRECT)
     }
 
     fun playTick() {
-        playOnce(sampleId = tickId)
+        playOnce(sampleId = SAMPLE_TICK)
     }
 
-    /**
-     * Start on touch-down so SoundPool's play() startup latency isn't heard on the
-     * first movement; movement then only adjusts volume, which is immediate.
-     */
     fun startPencil() {
-        if (pencilStreamId != 0 || pencilId !in loadedSampleIds) {
+        if (pencilVoiceHandle != NativeSfxEngine.INVALID_HANDLE) {
             return
         }
         playPencilStream(volume = PENCIL_MIN_VOLUME, rate = 1f)
     }
 
     fun updatePencilSpeed(speedPxPerMs: Float) {
-        if (pencilStreamId == 0) {
+        if (pencilVoiceHandle == NativeSfxEngine.INVALID_HANDLE) {
             return
         }
         val intensity = (speedPxPerMs / PENCIL_FULL_SPEED_PX_PER_MS).coerceIn(0f, 1f)
         val volume = PENCIL_MIN_VOLUME + (PENCIL_MAX_VOLUME - PENCIL_MIN_VOLUME) * intensity
         val rate = 0.9f + 0.2f * intensity
         if (SystemClock.uptimeMillis() - pencilStartedAtMs >= PENCIL_RETRIGGER_MS) {
-            // The one-shot is about to run out; overlap a fresh scratch with the old
-            // one's fade-out so continuous drawing sounds unbroken.
             playPencilStream(volume = volume, rate = rate)
         } else {
-            soundPool.setVolume(pencilStreamId, volume, volume)
-            soundPool.setRate(pencilStreamId, rate)
+            nativeSfx.setVolume(handle = pencilVoiceHandle, volume = volume)
+            nativeSfx.setRate(handle = pencilVoiceHandle, rate = rate)
         }
     }
 
-    private fun playPencilStream(volume: Float, rate: Float) {
-        pencilStreamId = soundPool.play(pencilId, volume, volume, 1, NO_LOOP, rate)
-        pencilStartedAtMs = SystemClock.uptimeMillis()
-    }
-
-    /** Silence without stopping, so resuming mid-stroke has no restart latency. */
     fun mutePencil() {
-        if (pencilStreamId == 0) {
-            return
+        if (pencilVoiceHandle != NativeSfxEngine.INVALID_HANDLE) {
+            nativeSfx.setVolume(handle = pencilVoiceHandle, volume = 0f)
         }
-        soundPool.setVolume(pencilStreamId, 0f, 0f)
     }
 
     fun stopPencil() {
-        if (pencilStreamId == 0) {
-            return
+        if (pencilVoiceHandle != NativeSfxEngine.INVALID_HANDLE) {
+            nativeSfx.stop(handle = pencilVoiceHandle)
+            pencilVoiceHandle = NativeSfxEngine.INVALID_HANDLE
         }
-        soundPool.stop(pencilStreamId)
-        pencilStreamId = 0
+    }
+
+    fun onAppForegrounded() {
+        pendingBackgroundStop?.cancel()
+        pendingBackgroundStop = null
+        isForegrounded = true
+        if (isNativeSfxReady) {
+            nativeSfx.setForeground(foreground = true)
+        }
+    }
+
+    fun onAppBackgrounded() {
+        isForegrounded = false
+        pendingBackgroundStop?.cancel()
+        pendingBackgroundStop = scope.launch {
+            delay(STREAM_RELEASE_DELAY_MS)
+            if (isNativeSfxReady && !isForegrounded) {
+                nativeSfx.setForeground(foreground = false)
+            }
+        }
     }
 
     fun startMusic() {
@@ -115,6 +115,56 @@ class SoundManager @Inject constructor(
 
     fun pauseMusic() {
         musicPlayer?.pause()
+    }
+
+    private fun initNativeSfx() {
+        if (!nativeSfx.isAvailable) {
+            return
+        }
+        val audioManager = context.getSystemService(AudioManager::class.java)
+        val deviceSampleRate = audioManager
+            ?.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)?.toIntOrNull() ?: 0
+        val deviceFramesPerBurst = audioManager
+            ?.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)?.toIntOrNull() ?: 0
+        if (!nativeSfx.init(deviceSampleRate, deviceFramesPerBurst)) {
+            Log.w(TAG, "Oboe stream unavailable; SFX disabled")
+            return
+        }
+        val samples = mapOf(
+            SAMPLE_CORRECT to R.raw.sfx_correct,
+            SAMPLE_TICK to R.raw.sfx_tick,
+            SAMPLE_PENCIL to R.raw.sfx_pencil_scratch,
+        )
+        val loadedAll = samples.all { (sampleId, resId) ->
+            val pcm = sfxDecoder.decode(resId = resId)
+            pcm != null &&
+                    nativeSfx.loadSample(sampleId, pcm.monoFrames, pcm.sampleRate)
+        }
+        if (!loadedAll) {
+            Log.w(TAG, "SFX decode failed; SFX disabled")
+            nativeSfx.setForeground(foreground = false)
+            return
+        }
+        isNativeSfxReady = true
+        nativeSfx.setForeground(foreground = isForegrounded)
+        Log.i(TAG, "Native low-latency SFX engine ready")
+    }
+
+    private fun playOnce(sampleId: Int) {
+        if (isNativeSfxReady) {
+            nativeSfx.play(sampleId, SFX_VOLUME, 1f)
+        }
+    }
+
+    private fun playPencilStream(volume: Float, rate: Float) {
+        if (!isNativeSfxReady) {
+            return
+        }
+        val handle = nativeSfx.play(SAMPLE_PENCIL, volume, rate)
+        if (handle != NativeSfxEngine.INVALID_HANDLE) {
+            pencilVoiceHandle = handle
+            pencilStartedAtMs = SystemClock.uptimeMillis()
+        }
     }
 
     private fun createMusicPlayer(): ExoPlayer =
@@ -141,24 +191,19 @@ class SoundManager @Inject constructor(
             prepare()
         }
 
-    private fun playOnce(sampleId: Int) {
-        if (sampleId in loadedSampleIds) {
-            soundPool.play(sampleId, SFX_VOLUME, SFX_VOLUME, 1, 0, 1f)
-        }
-    }
-
     private companion object {
         const val TAG = "SoundManager"
-        const val MAX_STREAMS = 4
-        const val NO_LOOP = 0
+
+        const val SAMPLE_CORRECT = 0
+        const val SAMPLE_TICK = 1
+        const val SAMPLE_PENCIL = 2
+
         const val SFX_VOLUME = 1f
         const val MUSIC_VOLUME = 0.35f
         const val PENCIL_MIN_VOLUME = 0.15f
         const val PENCIL_MAX_VOLUME = 0.9f
         const val PENCIL_FULL_SPEED_PX_PER_MS = 1.5f
-
-        // The scratch clip is 550 ms with an 80 ms fade-out; retriggering here lets
-        // the new scratch overlap the old one's tail instead of leaving a gap.
         const val PENCIL_RETRIGGER_MS = 450L
+        const val STREAM_RELEASE_DELAY_MS = 300L
     }
 }
